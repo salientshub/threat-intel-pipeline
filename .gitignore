@@ -1,0 +1,51 @@
+# =============================================================================
+# Threat Intelligence Pipeline — .gitignore
+# =============================================================================
+
+# ----- Secrets -----
+.env
+*.pem
+*.key
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# ----- Virtual Environments -----
+venv/
+.venv/
+env/
+
+# ----- IDE / Editor -----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ----- Testing & Coverage -----
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# ----- Logging -----
+logs/
+*.log
+
+# ----- OS -----
+.DS_Store
+Thumbs.db
+
+# ----- STIX output artifacts -----
+output/
+*.json
+!.pre-commit-config.yaml

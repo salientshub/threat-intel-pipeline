@@ -1,0 +1,8 @@
+{
+    "folders": [
+        {
+            "uri": "vscode-remote://wsl+ubuntu/home/user/threat_intel_pipeline"
+        }
+    ],
+    "remoteAuthority": "wsl+ubuntu"
+}
