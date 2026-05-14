@@ -1,0 +1,74 @@
+# =============================================================================
+# Threat Intelligence Pipeline — Execution Workflow
+# =============================================================================
+# This workflow runs the actual project end-to-end.
+# It can be triggered manually from the GitHub Actions tab.
+# =============================================================================
+
+name: 🚀 Run CTI Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Number of OTX pulses to fetch'
+        required: true
+        default: '3'
+        type: string
+      no_push:
+        description: 'Skip OpenSearch push (Dry run only)'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    # Runs automatically every day at midnight UTC (Uncomment to enable)
+    # - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  execute-pipeline:
+    name: ▶️ Execute Main Script
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🐳 Start Local OpenSearch (if pushing)
+        if: ${{ !inputs.no_push }}
+        run: |
+          docker compose up -d opensearch
+          echo "Waiting for OpenSearch to be ready..."
+          timeout 60 bash -c 'until curl -s -k https://localhost:9200/_cluster/health | grep -q "\"status\":\"green\"\|\"status\":\"yellow\""; do sleep 5; done'
+        env:
+          OPENSEARCH_ADMIN_PASSWORD: ${{ secrets.OPENSEARCH_PASSWORD || 'Runner@Admin123' }}
+
+      - name: 🚀 Run CTI Pipeline
+        env:
+          OTX_API_KEY: ${{ secrets.OTX_API_KEY }}
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+          OPENSEARCH_URL: https://localhost:9200
+          OPENSEARCH_USERNAME: admin
+          OPENSEARCH_PASSWORD: ${{ secrets.OPENSEARCH_PASSWORD || 'Runner@Admin123' }}
+        run: |
+          if [ "${{ inputs.no_push }}" == "true" ]; then
+            python main.py --limit ${{ inputs.limit }} --no-push
+          else
+            python main.py --limit ${{ inputs.limit }}
+          fi
